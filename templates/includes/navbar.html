@@ -1,0 +1,24 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">Ana Sayfa</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" href="/takvim">Takvim</a>
+                <a class="nav-link" href="/aliskanlik">Alışkanlıklar</a>
+            </div>
+
+            <div class="navbar-nav ms-auto">
+                {% if session["logged_in"] %}
+                <a class="nav-link" href="/profil">Profil</a>
+                <a class="nav-link" href="/logout">Çıkış Yap</a>
+                {% else %}
+                <a class="nav-link" href="/login">Giriş Yap</a>
+                <a class="nav-link" href="/register">Kayıt Olun</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>

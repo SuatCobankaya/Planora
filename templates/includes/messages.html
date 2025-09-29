@@ -1,0 +1,145 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+
+      {% if category == "levelup" %}
+        <div class="notification-container levelup" id="levelup-notification">
+          <div class="notification-box">
+            <div class="notification-header">NOTIFICATION</div>
+            <div class="notification-message">{{ message }}</div>
+          </div>
+        </div>
+      {% elif category == "rankup" %}
+        {% set rank_data = message.split(',') %}
+        <div class="notification-container rankup" id="rankup-notification">
+            <div class="notification-box job-change">
+                <div class="notification-header">NOTIFICATION</div>
+                <div class="job-change-message">Your Rank has changed</div>
+                <div class="old-rank">{{ rank_data[0] | trim }}</div>
+                <div class="arrow">↓</div>
+                <div class="new-rank">{{ rank_data[1] | trim }}</div>
+            </div>
+        </div>
+      {% else %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endif %}
+
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<style>
+/* Ortak stiller */
+.notification-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.notification-container.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Level-Up Kutusu */
+.notification-container.levelup .notification-box {
+    width: 400px;
+    height: 200px;
+    padding: 20px;
+    background-color: rgba(0,0,0,0.7);
+    border: 2px solid #00faff;
+    box-shadow: 0 0 20px #00faff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: monospace;
+}
+.notification-container.levelup .notification-header {
+    font-size: 22px;
+    font-weight: bold;
+    color: #00faff;
+    margin-bottom: 20px;
+}
+.notification-container.levelup .notification-message {
+    font-size: 18px;
+    color: #fff;
+}
+
+/* Rank-Up Kutusu */
+.notification-container.rankup .notification-box {
+    width: 450px;
+    padding: 30px;
+    background-color: rgba(0,0,0,0.7);
+    border: 2px solid #00faff;
+    box-shadow: 0 0 20px #00faff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+    color: #fff;
+}
+.notification-container.rankup .notification-header {
+    font-size: 24px;
+    font-weight: bold;
+    color: #00faff;
+    text-shadow: 0 0 10px #00faff;
+    margin-bottom: 20px;
+}
+.notification-container.rankup .job-change-message {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+.notification-container.rankup .old-rank, .notification-container.rankup .new-rank {
+    font-size: 20px;
+    font-weight: bold;
+    padding: 10px 20px;
+    border: 1px solid #00faff;
+    box-shadow: 0 0 10px #00faff;
+    margin: 10px 0;
+}
+.notification-container.rankup .old-rank {
+    color: #ccc;
+}
+.notification-container.rankup .new-rank {
+    color: #00ff00; /* Yeşil renk */
+    text-shadow: 0 0 5px #00ff00;
+}
+.notification-container.rankup .arrow {
+    font-size: 40px;
+    color: #00faff;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Level-Up ve Rank-Up popup'ları için tek bir fonksiyon
+    const specialNotifications = document.querySelectorAll('.notification-container');
+    specialNotifications.forEach(notification => {
+        if(notification) {
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000); // Bu özel bildirimler için daha uzun süre: 3 saniye
+        }
+    });
+
+    // Normal flash mesajları için
+    document.querySelectorAll('.alert-dismissible').forEach(msg => {
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(msg);
+            bsAlert.close();
+        }, 1500); // Normal mesajlar için 1.5 saniye
+    });
+});
+</script>

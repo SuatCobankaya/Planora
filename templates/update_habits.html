@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block body %}
+{% from "includes/formhelpers.html" import render_field %}
+
+<div class="container" style="display: flex; flex-wrap: wrap; gap: min(5vw,32px); padding: min(5vw,32px); background: #f2f6fc; border-radius: 18px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 100vw; box-sizing: border-box;">
+    <div style="flex: 1 1 100%; min-width: 220px; max-width: 400px; background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: min(5vw,32px) min(4vw,24px); display: flex; flex-direction: column; align-items: center; position: relative; min-height: 320px; margin: 0 auto;">
+        <h3 style="margin-bottom: 16px;">Alışkanlık Düzenle</h3>
+        <hr style="width: 100%;">
+        <form method="post" style="width: 100%; max-width: 320px;">
+            {{ render_field(form.title, class="form-control") }}
+            {{ render_field(form.content, class="form-control") }}
+            {{ render_field(form.frequency, class="form-control", id="frequency") }}
+            
+            <div id="days-selection" style="margin-top: 10px;">
+                {{ render_field(form.days, class="form-check") }}
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="margin-top: 16px;">Kaydet</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let freq = document.getElementById("frequency");
+    let days = document.getElementById("days-selection");
+
+    function toggleDays() {
+        if (freq.value === "weekly") {
+            days.style.display = "block";
+        } else {
+            days.style.display = "none";
+        }
+    }
+
+    freq.addEventListener("change", toggleDays);
+    toggleDays();
+});
+</script>
+{% endblock body %}

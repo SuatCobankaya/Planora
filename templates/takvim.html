@@ -1,0 +1,190 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<div class="container" style="display: flex; flex-wrap: wrap; gap: min(5vw,32px); padding: min(5vw,32px); background: #f2f6fc; border-radius: 18px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 100vw; box-sizing: border-box;">
+
+    <!-- Takvim Kutusu -->
+    <div style="background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 32px 24px; min-width: 340px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+            <button id="prevMonth" style="background: none; border: none; font-size: 1.5em;">&#8592;</button>
+            <span id="monthYear" style="font-weight: bold; font-size: 1.2em;">Eylül 2025</span>
+            <button id="nextMonth" style="background: none; border: none; font-size: 1.5em;">&#8594;</button>
+        </div>
+        <table id="calendar" style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead>
+                <tr>
+                    <th>Pzt</th>
+                    <th>Sal</th>
+                    <th>Çar</th>
+                    <th>Per</th>
+                    <th>Cum</th>
+                    <th>Cmt</th>
+                    <th>Paz</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Görevler Kutusu -->
+    <div style="flex: 2 1 340px; min-width: 260px; max-width: 600px; background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: min(5vw,32px) min(4vw,24px); display: flex; flex-direction: column; align-items: center; position: relative; min-height: 320px; margin-bottom: min(5vw,32px);">
+        <h2 style="text-align: center; margin-bottom: min(3vw,24px); font-size: min(5vw,1.5em); color: #2d3a4a;" id="dayTitle">
+          {% if selected_date %}
+            {% set months = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"] %}
+            {% set year = selected_date.split('-')[0] %}
+            {% set month = months[selected_date.split('-')[1]|int - 1] %}
+            {% set day = selected_date.split('-')[2]|int %}
+            {{ day }} {{ month }} {{ year }} Görevleri
+          {% else %}
+            Bugünün Görevleri
+          {% endif %}
+        </h2>
+        <div style="width: 100%; max-width: min(90vw,420px);">
+            <ul style="list-style: none; padding: 0; margin: 0;">
+            {% if tasks %}
+                {% for task in tasks %}
+                <li style="background: #fdfdfd; margin-bottom: 16px; padding: 16px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 8px;">
+                    <span style="font-size: 1.1em; font-weight: 600; color: #2c3e50;">{{ task.title }}</span>
+                    <span style="font-size: 0.95em; color: #555;">{{ task.description }}</span>
+                    <span style="font-size: 0.85em; color: #888;">
+                    ⏳ 
+                    {% if task.days_left is not none %}
+                        {% if task.days_left > 0 %}
+                            {{ task.days_left }} gün kaldı
+                        {% elif task.days_left == 0 %}
+                            Bugün Son
+                        {% else %}
+                            Süresi geçti ({{ task.days_left|abs }} gün önce)
+                        {% endif %}
+                    {% else %}
+                        Süresiz
+                    {% endif %}
+                    </span>
+                    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+                    <a href="/duzenle/{{ task.id }}?next={{ request.path }}" style="background: #13d5e3ff; color: white; border-radius: 6px; padding: 6px 12px; font-size: 0.9em; text-decoration: none; transition: 0.2s;">Düzenle</a>
+                    <a href="/sil/{{ task.id }}?next={{ request.path }}" style="background: #e74c3c; color: white; border-radius: 6px; padding: 6px 12px; font-size: 0.9em; text-decoration: none; transition: 0.2s;">Sil</a>
+                    </div>
+                </li>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-danger">Henüz Göreviniz bulunmuyor...</div>
+            {% endif %}
+            </ul>
+            <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+            <a href="{{ '/ekle_takvim/' ~ selected_date }}" id="addTaskBtn" style="background: #2d7cf4; color: white; border: none; border-radius: 6px; padding: min(2vw,10px) min(5vw,24px); font-size: min(4vw,1em); font-weight: 500; cursor: pointer; box-shadow: 0 2px 8px rgba(45,124,244,0.12); transition: background 0.2s; text-decoration: none;">➕ Görev Ekle</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gün Notu ve Gün Puanı -->
+    <div style="flex: 1 1 220px; min-width: 180px; max-width: 320px; background: #ffef92ff; border-radius: 14px; box-shadow: 0 1px 8px rgba(0,0,0,0.06); padding: min(4vw,24px); display: flex; flex-direction: column; align-items: center; margin-bottom: min(5vw,32px); margin-left: min(2vw,16px);">
+        <h3 style="margin-bottom: 12px; color: #2d3a4a;">Gün Notu</h3>
+        <textarea name="gun_notu" rows="4" style="width: 100%; border-radius: 8px; border: 1px solid #e3e8f0; padding: 8px; margin-bottom: 12px; resize: vertical; font-size: 1em;">{{notlar[0].note_text if notlar else "Henüz not eklenmemiş."}}</textarea>    
+        <label style="font-weight: 500; margin-bottom: 8px; display: block;">Gün Puanı:</label>
+        <div style="width: 100%; border-radius: 8px; border: 1px solid #e3e8f0; padding: 8px; font-size: 1em; background: white;">{{ notlar[0].rating if notlar else "Henüz puan verilmemiş." }}</div>
+    </div>
+</div>
+
+<!-- Takvim Stilleri -->
+<style>
+  #calendar th {
+    padding: 8px;
+    color: #2d3a4a;
+    font-weight: 600;
+    font-size: 0.95em;
+  }
+  #calendar td {
+    padding: 12px;
+    transition: background 0.2s, transform 0.1s;
+  }
+  #calendar td:hover {
+    background: #d0e6ff;
+    transform: scale(1.05);
+  }
+  .day-cell {
+    cursor: pointer;
+    border-radius: 10px;
+    background: #f4f6f9;
+  }
+  .selected-day {
+    background: #2d7cf4 !important;
+    color: white !important;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(45,124,244,0.3);
+  }
+  .today {
+    border: 2px solid #13d5e3;
+    font-weight: bold;
+  }
+</style>
+
+<script>
+const monthNames = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+let currentDate = new Date();
+{% if selected_date %}
+    currentDate = new Date("{{ selected_date }}");
+{% endif %}
+
+function renderCalendar(year, month) {
+    document.getElementById('monthYear').textContent = monthNames[month] + " " + year;
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    let tbody = "";
+    let day = 1;
+
+    let selectedDateStr = "{{ selected_date or '' }}";
+
+    for (let i = 0; i < 6; i++) {
+        let row = "<tr>";
+        for (let j = 1; j <= 7; j++) {
+            let cell = "";
+            let cellDay = (i === 0 && j < (firstDay === 0 ? 7 : firstDay)) ? "" : (day <= lastDate ? day : "");
+            if (cellDay) {
+                let cellDate = `${year}-${String(month+1).padStart(2,'0')}-${String(cellDay).padStart(2,'0')}`;
+
+                let today = new Date();
+                let isToday = (today.getFullYear() === year &&
+                               today.getMonth() === month &&
+                               today.getDate() === cellDay);
+
+                let isSelected = (selectedDateStr === cellDate);
+
+                let classes = "day-cell";
+                if (isToday) classes += " today";
+                if (isSelected) classes += " selected-day";
+
+                cell = `<td class="${classes}" onclick="selectDay(${year},${month},${cellDay})">${cellDay}</td>`;
+                day++;
+            } else {
+                cell = "<td></td>";
+            }
+            row += cell;
+        }
+        row += "</tr>";
+        tbody += row;
+        if (day > lastDate) break;
+    }
+    document.querySelector("#calendar tbody").innerHTML = tbody;
+}
+
+window.selectDay = function(year, month, day) {
+    const formattedDate = year + "-" +
+        String(month + 1).padStart(2, '0') + "-" +
+        String(day).padStart(2, '0');
+    window.location.href = "/takvim/" + formattedDate;
+};
+
+document.getElementById('prevMonth').onclick = function() {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+};
+document.getElementById('nextMonth').onclick = function() {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+};
+
+renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+</script>
+
+{% endblock %}

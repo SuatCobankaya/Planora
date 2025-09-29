@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="container" style="max-width: 700px; margin: 0 auto; background: #f2f6fc; border-radius: 18px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: min(5vw,32px); display: flex; flex-direction: column; gap: 32px;">
+    <!-- Profil ve Ayarlar -->
+    <div style="background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 32px 24px; display: flex; align-items: center; gap: 32px;">
+        <!-- Profil Sol: Avatar, Rank, Level -->
+        <div style="display: flex; flex-direction: column; align-items: center; min-width: 160px;">
+            <img src="{{ url_for('static', filename= user.avatar + '_' +user.level.lower() +'.jpg') }}" alt="Avatar" style="width: 100px; height: 100px; object-fit: cover; object-position: top; border-radius: 50%; margin-bottom: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.12); border: 4px solid #e3e8f0; background: #f2f6fc;">
+            <p style="font-weight: bold; font-size: 1.1em; margin-bottom: 4px;">Rank: {{user.level}}</p>
+            <p style="color: #888;">level {{user.seviye}}</p>
+        </div>
+        <!-- Profil Sağ: Ayarlar -->
+        <div style="flex: 1;">
+            <!-- Tek Form: Avatar ve Mail Bildirim -->
+            <form method="post" action="/profil">
+                <!-- Avatar Seçimi -->
+                <label style="font-weight: 500; margin-bottom: 8px; display: block;">Avatar Seç:</label>
+                {{ form.avatar(class="form-select", style="width: 180px; border-radius: 8px; border: 1px solid #e3e8f0; padding: 8px; font-size: 1em; margin-bottom: 16px;") }}
+
+                <!-- Mail Bildirim -->
+                <label style="font-weight: 500; margin-bottom: 8px; display: block;">Mail Bildirimi:</label>
+                <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                    {{ form.chekbox() }}
+                    <span style="font-size: 1em;">Görevlerim için mail almak istiyorum</span>
+                </label>
+
+                <!-- Ortak Kaydet Butonu -->
+                <button type="submit" style="background: #2d7cf4; color: white; border: none; border-radius: 8px; padding: 8px 18px; font-size: 1em; font-weight: 500; cursor: pointer;">Kaydet</button>
+            </form>
+        </div>
+
+    </div>
+    <!-- İstatistikler -->
+    <div style="background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 32px 24px;">
+        <h2 style="color: #2d3a4a; margin-bottom: 18px;">İstatistikler</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 32px;">
+            <div style="flex: 1; min-width: 140px;">
+                <span style="font-size: 1.1em; color: #2d7cf4; font-weight: 600;">Tamamlanan Görev</span>
+                <div style="font-size: 2em; font-weight: bold; color: #27ae60;">{{yapilan}}</div>
+            </div>
+            <div style="flex: 1; min-width: 140px;">
+                <span style="font-size: 1.1em; color: #e74c3c; font-weight: 600;">Yapılmayan Görev</span>
+                <div style="font-size: 2em; font-weight: bold; color: #e74c3c;">{{yapilmayan}}</div>
+            </div>
+            <div style="flex: 1; min-width: 140px;">
+                <span style="font-size: 1.1em; color: #f7c948; font-weight: 600;">Toplam XP</span>
+                <div style="font-size: 2em; font-weight: bold; color: #f7c948;">{{xp}}</div>
+            </div>
+            <div style="flex: 1; min-width: 140px;">
+                <span style="font-size: 1.1em; color: #13d5e3ff; font-weight: 600;">En Uzun Seri</span>
+                <div style="font-size: 2em; font-weight: bold; color: #13d5e3ff;">{{seri}} gün</div>
+            </div>
+            <div style="flex: 1; min-width: 140px;">
+                <span style="font-size: 1.1em; color: #8e44ad; font-weight: 600;">Toplam Alışkanlık</span>
+                <div style="font-size: 2em; font-weight: bold; color: #8e44ad;">{{aliskan}}</div>
+            </div>
+            <div style="flex: 1; min-width: 140px;">
+                <span style="font-size: 1.1em; color: #27ae60; font-weight: 600;">Tekrar Edilen Konu</span>
+                <div style="font-size: 2em; font-weight: bold; color: #27ae60;">{{tekrar}}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
