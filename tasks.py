@@ -1,26 +1,25 @@
 import smtplib
 from email.mime.text import MIMEText
 from flask import Flask
-from flask_mysqldb import MySQL
+import sqlite3
 from datetime import datetime, date
 from planora import calculate_next_date
 
 app = Flask(__name__)
+app.secret_key= "suat"
+DATABASE = "planora.db"
 
-# Veritabanı ayarları (sadece tasks için)
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'planora'
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+def get_db():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-mysql = MySQL(app)
 def guncelle_gorevler():
     bugun = date.today()
     with app.app_context():
-        cursor = mysql.connection.cursor()
-        sorgu = "Select * From habits WHERE start_date = %s"
-        cursor.execute(sorgu,(bugun,))
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("Select * From habits WHERE start_date = ?",(bugun,))
         tasks = cursor.fetchall()
         for i in tasks:
             frequency = i["frequency"]
@@ -30,27 +29,26 @@ def guncelle_gorevler():
             son = i["last_completed_date"]
             tarih = calculate_next_date(frequency, days, eski)
             start_date = calculate_next_date(frequency, days, tarih)
-            cursor.execute("UPDATE habits SET start_date = %s ,date = %s, streak_count = 0, level = 'E' WHERE id = %s",(start_date,tarih,id))
-        mysql.connection.commit()
-        cursor.close()
+            cursor.execute("UPDATE habits SET start_date = ? ,date = ?, streak_count = 0, level = 'E' WHERE id = ?",(start_date,tarih,id))
+        conn.commit()
+        conn.close()
 def mail_gonder():
     bugun = date.today()
     with app.app_context():
-        cursor = mysql.connection.cursor()
+        conn = get_db()
+        cursor = conn.cursor()
         cursor.execute("SELECT id, email, username FROM users WHERE mail_notifications = 1")
         users = cursor.fetchall()
         for user in users:
             user_id = user["id"]
             email = user["email"]
             user_name = user["username"]
-            sorgu = "Select * From tasks where user_id = %s and ((date = %s) OR (start_date <= %s AND end_date >= %s) OR end_date IS NULL) and is_completed IS NULL"
             cursor.execute(
-                sorgu,
+                "Select * From tasks where user_id = ? and ((date = ?) OR (start_date <= ? AND end_date >= ?) OR end_date IS NULL) and is_completed IS NULL",
                 (user_id, bugun, bugun, bugun)
             )
             tasks = cursor.fetchall()
-            sorgu2 = "Select * From habits where user_id = %s and date = %s"
-            cursor.execute(sorgu2,(user_id, bugun))
+            cursor.execute("Select * From habits where user_id = ? and date = ?",(user_id, bugun))
             habits = cursor.fetchall()
             gorevler = tasks + habits
 
@@ -71,7 +69,7 @@ def mail_gonder():
             except Exception as e:
                 print(f"[HATA] Mail gönderilemedi -> {email} | {e}")
 
-        cursor.close()
+        conn.close()
 
 if __name__ == "__main__":
     guncelle_gorevler()
