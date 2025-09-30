@@ -182,9 +182,11 @@ def login():
     
        cursor = conn.cursor()
 
-       result = cursor.execute("Select * From users where username = ?",(username,))
+       cursor.execute("Select * From users where username = ?",(username,))
 
-       if result > 0:
+       result = cursor.fetchone()
+
+       if result :
            data = cursor.fetchone()
            real_password = data["password"]
            if sha256_crypt.verify(password_entered,real_password):
@@ -724,11 +726,13 @@ def delete(id):
     conn = get_db()
     cursor = conn.cursor()
 
-    result = cursor.execute("Select * from tasks where user_id = ? and id = ?",(session["user_id"],id))
+    cursor.execute("Select * from tasks where user_id = ? and id = ?",(session["user_id"],id))
+
+    result = cursor.fetchone()
 
     next_page = request.args.get('next')
 
-    if result > 0:
+    if result :
 
         cursor.execute("Delete from tasks where id = ?",(id,))
 
@@ -748,11 +752,13 @@ def delete_habit(id):
     conn = get_db()
     cursor = conn.cursor()
 
-    result = cursor.execute("Select * from habits where user_id = ? and id = ?",(session["user_id"],id))
+    cursor.execute("Select * from habits where user_id = ? and id = ?",(session["user_id"],id))
+
+    result = cursor.fetchone()
 
     next_page = request.args.get('next')
 
-    if result > 0:
+    if result :
 
         cursor.execute("Delete from habits where id = ?",(id,))
 
