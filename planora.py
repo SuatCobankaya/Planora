@@ -117,17 +117,18 @@ def index():
 
    bugun = date.today()
 
-   result4 = cursor.execute("Select * From tasks where user_id = ? and date = ? and is_completed IS NULL",(session["user_id"],bugun))
+   cursor.execute("Select * From tasks where user_id = ? and date = ? and is_completed IS NULL",(session["user_id"],bugun))
+   result4 = cursor.fetchall()
+   tasks1 = result4
 
-   tasks1 = cursor.fetchall()
-
-   result3 = cursor.execute("Select * From tasks where user_id = ? and ((start_date <= ? AND end_date >= ?) OR end_date IS NULL) and is_completed IS NULL",(session["user_id"],bugun,bugun))
-
-   tasks2 = cursor.fetchall()
+   cursor.execute("Select * From tasks where user_id = ? and ((start_date <= ? AND end_date >= ?) OR end_date IS NULL) and is_completed IS NULL",(session["user_id"],bugun,bugun))
+   result3 = cursor.fetchall()
+   tasks2 = result3
 
    tasks = tasks1 + tasks2
 
-   result2 = result4 + result3
+   result2 = len(result3) + len(result4)
+
    today = date.today()
    updated_tasks = []
    for task in tasks:
@@ -145,7 +146,7 @@ def index():
 
    habits = cursor.fetchall()
    conn.close()
-   if result > 0 or result2 > 0:
+   if len(result) > 0 or result2 > 0:
         return render_template("index.html",data = data, tasks = updated_tasks, habits = habits)
 
    return render_template("index.html")
@@ -187,7 +188,7 @@ def login():
        result = cursor.fetchone()
 
        if result :
-           data = cursor.fetchone()
+           data = result
            real_password = data["password"]
            if sha256_crypt.verify(password_entered,real_password):
                flash("Başarıyla Giriş Yaptınız...","success")
@@ -416,14 +417,21 @@ def profil():
     form.chekbox.data = bool(profil["mail_notifications"])
     cursor.execute("Select * From users where id = ?",(session["user_id"],))
     user = cursor.fetchone()
-    yapilan = cursor.execute("Select * From tasks where user_id = ? and is_completed = 1",(session["user_id"],))
+    cursor.execute("Select * From tasks where user_id = ? and is_completed = 1",(session["user_id"],))
+    rows1 = cursor.fetchall()
+    yapilan = len(rows1)
     bugun = date.today()
-    yapilmayan = cursor.execute("Select * From tasks where user_id = ? and end_date < ? and is_completed IS NULL",(session["user_id"],bugun))
+    cursor.execute("Select * From tasks where user_id = ? and end_date < ? and is_completed IS NULL",(session["user_id"],bugun))
+    rows2 = cursor.fetchall()
+    yapilmayan = len(rows2)
 
-    tekrar = cursor.execute("Select * From tasks where user_id = ? and repeat_type = ? and is_completed = 1",(session["user_id"],'aralikli'))
+    cursor.execute("Select * From tasks where user_id = ? and repeat_type = ? and is_completed = 1",(session["user_id"],'aralikli'))
+    rows3 = cursor.fetchall
+    tekrar = len(rows3)
 
-    aliskan = cursor.execute("Select * From habits where user_id = ?",(session["user_id"],))
+    cursor.execute("Select * From habits where user_id = ?",(session["user_id"],))
     x = cursor.fetchall()
+    aliskan = len(x)
     seri = 0
     for i in x:
         y = i["streak_count"]
@@ -440,7 +448,7 @@ def get_gunluk_not(tarih):
     if tarih == "bugun":
         bugun = date.today()   
     else:
-        bugun = date
+        bugun = tarih
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("SELECT note_text, rating FROM daily_notes WHERE user_id = ? AND date = ?", (session["user_id"], bugun))
@@ -782,7 +790,7 @@ def update(id):
 
        result = cursor.execute("Select * from tasks where id = ? and user_id = ?",(id,session["user_id"]))
 
-       if result == 0:
+       if len(result) == 0:
            flash("bu işleme yetkiniz yok","danger")
            return redirect(url_for("index"))
        else:
@@ -822,7 +830,7 @@ def update_habit(id):
 
        result = cursor.execute("Select * from habits where id = ? and user_id = ?",(id,session["user_id"]))
 
-       if result == 0:
+       if len(result) == 0:
            flash("bu işleme yetkiniz yok","danger")
            return redirect(url_for("index"))
        else:
