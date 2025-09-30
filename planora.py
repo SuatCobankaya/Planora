@@ -111,9 +111,9 @@ def index():
    conn = get_db()
    cursor = conn.cursor()
 
-   result = cursor.execute("Select * From users where username = ?",(session["username"],))
+   cursor.execute("Select * From users where username = ?",(session["username"],))
 
-   data = cursor.fetchone()
+   data = cursor.fetchall()
 
    bugun = date.today()
 
@@ -146,7 +146,7 @@ def index():
 
    habits = cursor.fetchall()
    conn.close()
-   if len(result) > 0 or result2 > 0:
+   if len(data) > 0 or result2 > 0:
         return render_template("index.html",data = data, tasks = updated_tasks, habits = habits)
 
    return render_template("index.html")
@@ -426,7 +426,7 @@ def profil():
     yapilmayan = len(rows2)
 
     cursor.execute("Select * From tasks where user_id = ? and repeat_type = ? and is_completed = 1",(session["user_id"],'aralikli'))
-    rows3 = cursor.fetchall
+    rows3 = cursor.fetchall()
     tekrar = len(rows3)
 
     cursor.execute("Select * From habits where user_id = ?",(session["user_id"],))
@@ -788,7 +788,9 @@ def update(id):
        conn = get_db()
        cursor = conn.cursor()
 
-       result = cursor.execute("Select * from tasks where id = ? and user_id = ?",(id,session["user_id"]))
+       cursor.execute("Select * from tasks where id = ? and user_id = ?",(id,session["user_id"]))
+
+       result = cursor.fetchall()
 
        if len(result) == 0:
            flash("bu işleme yetkiniz yok","danger")
@@ -828,7 +830,8 @@ def update_habit(id):
        conn = get_db()
        cursor = conn.cursor()
 
-       result = cursor.execute("Select * from habits where id = ? and user_id = ?",(id,session["user_id"]))
+       cursor.execute("Select * from habits where id = ? and user_id = ?",(id,session["user_id"]))
+       result = cursor.fetchall()
 
        if len(result) == 0:
            flash("bu işleme yetkiniz yok","danger")
