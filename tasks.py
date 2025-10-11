@@ -22,11 +22,12 @@ def guncelle_gorevler():
         cursor.execute("Select * From habits WHERE start_date = ?",(bugun,))
         tasks = cursor.fetchall()
         for i in tasks:
+            i = dict(i)
             frequency = i["frequency"]
             days = i["days"]
             id = i["id"]
             eski = i["date"]
-            son = i["last_completed_date"]
+            eski = datetime.strptime(eski, "%Y-%m-%d").date()
             tarih = calculate_next_date(frequency, days, eski)
             start_date = calculate_next_date(frequency, days, tarih)
             cursor.execute("UPDATE habits SET start_date = ? ,date = ?, streak_count = 0, level = 'E' WHERE id = ?",(start_date,tarih,id))
@@ -40,6 +41,7 @@ def mail_gonder():
         cursor.execute("SELECT id, email, username FROM users WHERE mail_notifications = 1")
         users = cursor.fetchall()
         for user in users:
+            user = dict(user)
             user_id = user["id"]
             email = user["email"]
             user_name = user["username"]

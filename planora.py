@@ -113,37 +113,36 @@ def index():
 
    cursor.execute("Select * From users where username = ?",(session["username"],))
 
-   data = cursor.fetchall()
+   data = cursor.fetchone()
 
    bugun = date.today()
 
-   cursor.execute("Select * From tasks where user_id = ? and date = ? and is_completed IS NULL",(session["user_id"],bugun))
+   cursor.execute("Select * From tasks where user_id = ? and date = ? and is_completed = ?",(session["user_id"],bugun,0))
    result4 = cursor.fetchall()
    tasks1 = result4
 
-   cursor.execute("Select * From tasks where user_id = ? and ((start_date <= ? AND end_date >= ?) OR end_date IS NULL) and is_completed IS NULL",(session["user_id"],bugun,bugun))
+   cursor.execute("Select * From tasks where user_id = ? and ((start_date <= ? AND end_date >= ?) OR end_date IS NULL) and is_completed = ?",(session["user_id"],bugun,bugun,0))
    result3 = cursor.fetchall()
    tasks2 = result3
 
    tasks = tasks1 + tasks2
 
    result2 = len(result3) + len(result4)
-
    today = date.today()
    updated_tasks = []
    for task in tasks:
-        # end_date alanı datetime/datetime64 olabilir, string ise dönüştürmen gerekebilir
+        task = dict(task)
         end_date = task["end_date"]
+        if end_date:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
         if isinstance(end_date, datetime):
             end_date = end_date.date()
         days_left = (end_date - today).days if end_date else None
 
-        # dictionary’ye yeni alan ekle
         task["days_left"] = days_left
         updated_tasks.append(task)
 
-   cursor.execute("Select * From habits where user_id = ? and date = ? and last_completed_date != ?",(session["user_id"],bugun,bugun))
-
+   cursor.execute("Select * From habits where user_id = ? and date = ? and (last_completed_date != ? OR last_completed_date IS NULL)",(session["user_id"],bugun,bugun))
    habits = cursor.fetchall()
    conn.close()
    if len(data) > 0 or result2 > 0:
@@ -268,7 +267,6 @@ def bitti_habit(id):
     cursor = conn.cursor()
     cursor.execute("Select * from habits where id = ? and user_id = ?",(id,session["user_id"]))
     habit = cursor.fetchall()
-    print(habit)
     habit = habit[0]
     frequency = habit["frequency"]
     days = habit["days"].split(",") if habit["days"] else []
@@ -348,7 +346,7 @@ def takvim_today():
     conn = get_db()
     cursor = conn.cursor()
     bugun = bugun.strftime("%Y-%m-%d")
-    cursor.execute("Select * From tasks where user_id = ? and ((date = ?) OR (start_date <= ? AND end_date >= ?) OR end_date IS NULL) and is_completed IS NULL", (session["user_id"], bugun, bugun, bugun))
+    cursor.execute("Select * From tasks where user_id = ? and ((date = ?) OR (start_date <= ? AND end_date >= ?) OR end_date IS NULL) and is_completed = ?", (session["user_id"], bugun, bugun, bugun,0))
     gorevler = cursor.fetchall()
     cursor.execute("Select * From daily_notes where user_id = ? and date = ?", (session["user_id"], bugun))
     notlar = cursor.fetchall()
@@ -357,12 +355,14 @@ def takvim_today():
     updated_tasks = []
     for task in gorevler:
             # end_date alanı datetime/datetime64 olabilir, string ise dönüştürmen gerekebilir
+            task = dict(task)
             end_date = task["end_date"]
+            if end_date:
+                end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
             if isinstance(end_date, datetime):
                 end_date = end_date.date()
             days_left = (end_date - today).days if end_date else None
 
-            # dictionary’ye yeni alan ekle
             task["days_left"] = days_left
             updated_tasks.append(task)
     return render_template("takvim.html", tasks=updated_tasks, selected_date=bugun, notlar=notlar)
@@ -372,7 +372,7 @@ def takvim_today():
 def takvim_date(tarih):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("Select * From tasks where user_id = ? and ((date = ?) OR (start_date <= ? AND end_date >= ?) OR end_date IS NULL) and is_completed IS NULL", (session["user_id"], tarih, tarih, tarih))
+    cursor.execute("Select * From tasks where user_id = ? and ((date = ?) OR (start_date <= ? AND end_date >= ?) OR end_date IS NULL) and is_completed = ?", (session["user_id"], tarih, tarih, tarih,0))
     gorevler = cursor.fetchall()
     cursor.execute("Select * From daily_notes where user_id = ? and date = ?", (session["user_id"], tarih))
     notlar = cursor.fetchall()
@@ -381,7 +381,10 @@ def takvim_date(tarih):
     updated_tasks = []
     for task in gorevler:
             # end_date alanı datetime/datetime64 olabilir, string ise dönüştürmen gerekebilir
+            task = dict(task)
             end_date = task["end_date"]
+            if end_date:
+                end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
             if isinstance(end_date, datetime):
                 end_date = end_date.date()
             days_left = (end_date - today).days if end_date else None
@@ -420,8 +423,9 @@ def profil():
     cursor.execute("Select * From tasks where user_id = ? and is_completed = 1",(session["user_id"],))
     rows1 = cursor.fetchall()
     yapilan = len(rows1)
-    bugun = date.today()
-    cursor.execute("Select * From tasks where user_id = ? and end_date < ? and is_completed IS NULL",(session["user_id"],bugun))
+
+    bugun = date.today().strftime("%Y-%m-%d")
+    cursor.execute("Select * From tasks where user_id = ? and end_date < ? and is_completed = ?",(session["user_id"],bugun,0))
     rows2 = cursor.fetchall()
     yapilmayan = len(rows2)
 
@@ -434,7 +438,9 @@ def profil():
     aliskan = len(x)
     seri = 0
     for i in x:
+        i = dict(i)
         y = i["streak_count"]
+        print(y)
         if y > seri:
             seri = y
 
@@ -476,7 +482,7 @@ def notekle():
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) AS count FROM daily_notes WHERE user_id = ? AND date = ?", (session["user_id"], bugun))
-        kayit_sayisi = cursor.fetchone()["count"]
+        kayit_sayisi = cursor.fetchone()[0]
 
         if kayit_sayisi > 0:
             cursor.execute("UPDATE daily_notes SET note_text = ?, rating = ? WHERE user_id = ? AND date = ?", (gun_notu, gun_puani, session["user_id"], bugun))
@@ -553,7 +559,7 @@ def ekle(tarih):
                 conn.close()
                 
             else:
-                aralik = [0,4,11,25,55,115]
+                aralik = [0,3,10,24,54,114]
                 conn = get_db()
                 cursor = conn.cursor()
                 for index,i in enumerate(aralik, start=1):
@@ -625,7 +631,7 @@ def ekle(tarih):
                 conn.close()
                 
             else:
-                aralik = [0,4,11,25,55,115]
+                aralik = [0,3,10,24,54,114]
                 conn = get_db()
                 cursor = conn.cursor()
                 for index,i in enumerate(aralik, start=1):
@@ -709,7 +715,7 @@ def ekle_tarih(tarih):
                 conn.close()
                 
             else:
-                aralik = [0,4,11,25,55,115]
+                aralik = [0,3,10,24,54,114]
                 conn = get_db()
                 cursor = conn.cursor()
                 for index,i in enumerate(aralik, start=1):
@@ -748,7 +754,7 @@ def delete(id):
         conn.close()
         flash("Görev Silindi","danger")
         if next_page:
-          return redirect(next_page)  # geldiği sayfaya dön
+          return redirect(next_page)
     else:
         flash("bu işleme yetkiniz yok","danger")
         if next_page:
@@ -774,7 +780,7 @@ def delete_habit(id):
         conn.close()
         flash("Alışkanlık Silindi","danger")
         if next_page:
-          return redirect(next_page)  # geldiği sayfaya dön
+          return redirect(next_page) 
     else:
         flash("bu işleme yetkiniz yok","danger")
         if next_page:
@@ -796,6 +802,7 @@ def update(id):
            flash("bu işleme yetkiniz yok","danger")
            return redirect(url_for("index"))
        else:
+           cursor.execute("Select * from tasks where id = ? and user_id = ?",(id,session["user_id"]))
            tasks = cursor.fetchone()
            form = gorevForm()
 
@@ -837,6 +844,7 @@ def update_habit(id):
            flash("bu işleme yetkiniz yok","danger")
            return redirect(url_for("index"))
        else:
+           cursor.execute("Select * from habits where id = ? and user_id = ?",(id,session["user_id"]))
            habits = cursor.fetchone()
            form = HabitForm()
 
